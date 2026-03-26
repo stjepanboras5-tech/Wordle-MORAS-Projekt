@@ -1,0 +1,1773 @@
+class Game {
+    field String rijec;
+    field int pokusaj;
+    field int duljina_rijeci;
+    field int pocetni_x;
+    field int last_3word, last_4word, last_5word; 
+    static bool weak_izlaz;
+    static int seed;
+
+    constructor Game new() {
+        let seed = 0;
+        let last_3word = 300;
+        let last_4word = 300;
+        let last_5word = 300;
+        return this;
+    }
+
+    method void run() {
+        var int x, y, i, j, slovo, pozicija, timer;
+        var String pogadaj;
+        var bool boja_timera, gotovo;
+
+        while (true) {  // MAIN FUNKCIJA IGRICE
+            do Screen.clearScreen();
+            let slovo = 0;
+            let pokusaj = 0;
+            let weak_izlaz = false;
+            let gotovo = false;
+
+            do pocetni_screen();
+            let duljina_rijeci = 3;
+            let x = 42;
+            let y = 140;
+            do Sys.wait(400);
+
+            while (~(slovo = 128)) {  // POCETNI SCREEN - BIRANJE DULJINE RIJECI
+                let slovo = 0;
+                while (slovo = 0) {
+                    let slovo = Keyboard.keyPressed();
+                    if (seed = 32767) { let seed = -1; }
+                    let seed = seed + 1;
+                }
+                if ((slovo = 130) | (slovo = 65) | (slovo = 97)) {  // <-
+                    do crtaj(duljina_rijeci+48, false, false, x, y, false);
+                    if (duljina_rijeci = 3) {
+                        let x = 442;
+                        let duljina_rijeci = 5;
+                        do crtaj(duljina_rijeci+48, false, false, x, y, true);
+                    }
+                    else {
+                        let x = x - 200;
+                        let duljina_rijeci = duljina_rijeci - 1;
+                        do crtaj(duljina_rijeci+48, false, false, x, y, true);
+                    }
+                }
+                if ((slovo = 132) | (slovo = 68) | (slovo = 100)) {  // ->
+                    do crtaj(duljina_rijeci+48, false, false, x, y, false);
+                    if (duljina_rijeci = 5) {
+                        let x = 42;
+                        let duljina_rijeci = 3;
+                        do crtaj(duljina_rijeci+48, false, false, x, y, true);
+                    }
+                    else {
+                        let x = x + 200;
+                        let duljina_rijeci = duljina_rijeci + 1;
+                        do crtaj(duljina_rijeci+48, false, false, x, y, true);
+                    }
+                }
+                if ((slovo > 50) & (slovo < 54)) {  // 3,4,5
+                    do crtaj(duljina_rijeci+48, false, false, x, y, false);
+                    let x = 42 + Math.multiply(200, slovo-51);
+                    let duljina_rijeci = slovo - 48;
+                    do crtaj(duljina_rijeci+48, false, false, x, y, true);
+                }
+                if (slovo = 140) {
+                    return;
+                }
+                do Sys.wait(175);
+            }
+            do Screen.clearScreen();
+
+            let pocetni_x = Math.divide(516 - Math.multiply(duljina_rijeci, 34), 2)  + 1;
+            do odabir_rijeci();
+
+            let y = 0 - 44;
+            let i = 0;
+            while (i < 6) {           // CRTANJE KUCICA
+                let x = pocetni_x;
+                let y = y + 44;
+                let j = 0;
+                while (j < duljina_rijeci) {
+                    do crtaj(0, false, false, x, y, true);
+                    let x = x + 34;
+                    let j = j + 1;
+                }
+                let i = i + 1;
+            }
+
+            let y = 0 - 44;
+            let timer = 0;
+            let boja_timera = true;
+            while ((pokusaj < 6) & (weak_izlaz = false) & (gotovo = false))  {      // MAIN POKUSAJI
+                let x = pocetni_x;
+                let y = y + 44;
+                let slovo = 0;
+                let pozicija = 0;
+                let pogadaj = String.new(duljina_rijeci);
+                while (((pozicija < duljina_rijeci) | (~(slovo = 128))) & (weak_izlaz = false)) {
+                    if (slovo = Keyboard.keyPressed()) {
+                        do Sys.wait(70);
+                    }
+                    let slovo = 0;
+                    while (slovo = 0) {
+                        let slovo = Keyboard.keyPressed();
+                        if ((timer > 2500) & (pozicija < duljina_rijeci)) {
+                            if (boja_timera = true) {
+                                do crtaj(95, false, false, x, y, true);
+                            }
+                            else {
+                                do crtaj(0, false, false, x, y, true);
+                            }
+                            let timer = -1;
+                            let boja_timera = ~boja_timera;
+                        }
+                        let timer = timer + 1;
+                    }
+                    if ((((slovo > 64) & (slovo < 91)) | ((slovo > 96) & (slovo < 123))) & (pozicija < duljina_rijeci)) {
+                        do crtaj(slovo, false, false, x, y, true);
+                        let x = x + 34;
+                        let pozicija = pozicija + 1;
+                        if ((slovo > 96) & (slovo < 123)) {
+                            let slovo = slovo - 32;
+                            do pogadaj.appendChar(slovo);
+                            let slovo = slovo + 32;
+                        }
+                        else {
+                            do pogadaj.appendChar(slovo);
+                        }
+                    }
+                    if ((slovo = 129) & (pozicija > 0)) {
+                        if (pozicija < duljina_rijeci) {
+                            do crtaj(0, false, false, x, y, true);
+                        }
+                        let x = x - 34;
+                        let pozicija = pozicija - 1;
+                        do crtaj(0, false, false, x, y, true);
+                        do pogadaj.eraseLastChar();
+                    }
+                    if (slovo = 140) {
+                        let weak_izlaz = true;
+                        do pogadaj.dispose();
+                    }
+                    do Sys.wait(40);
+                }
+                
+                if (weak_izlaz = false) {  // PROVJERA POKUSAJA
+                    let gotovo = provjera(pogadaj, pokusaj);
+                    do pogadaj.dispose();
+                    let pokusaj = pokusaj + 1;
+                }
+            }
+
+            if (weak_izlaz = false) {  // RUNDA GOTOVA
+                do Sys.wait(150);
+                let slovo = 0;
+                while (slovo = 0) { let slovo = Keyboard.keyPressed(); }
+                do Screen.clearScreen();
+                do zavrsni_screen(gotovo);
+                let slovo = 0;
+                while (slovo = 0) { let slovo = Keyboard.keyPressed(); }
+            }
+        }
+        return;
+    }
+
+    method void odabir_rijeci() {
+        var int random_index;
+        let random_index = seed;
+
+        if (duljina_rijeci = 3) {
+            let random_index = seed - Math.multiply(Math.divide(seed, 165), 165);
+            if (random_index = last_3word) {
+                let random_index = random_index + 50;
+                let random_index = random_index - Math.multiply(Math.divide(random_index, 165), 165);
+            }
+            let last_3word = random_index;
+            if (random_index = 0) { let rijec = "ACE"; }
+            if (random_index = 1) { let rijec = "ACT"; }
+            if (random_index = 2) { let rijec = "AIR"; }
+            if (random_index = 3) { let rijec = "ALE"; }
+            if (random_index = 4) { let rijec = "ANT"; }
+            if (random_index = 5) { let rijec = "ARC"; }
+            if (random_index = 6) { let rijec = "ARM"; }
+            if (random_index = 7) { let rijec = "ART"; }
+            if (random_index = 8) { let rijec = "ASH"; }
+            if (random_index = 9) { let rijec = "AWE"; }
+            if (random_index = 10) { let rijec = "AXE"; }
+            if (random_index = 11) { let rijec = "BAG"; }
+            if (random_index = 12) { let rijec = "BAR"; }
+            if (random_index = 13) { let rijec = "BAT"; }
+            if (random_index = 14) { let rijec = "BAY"; }
+            if (random_index = 15) { let rijec = "BED"; }
+            if (random_index = 16) { let rijec = "BEE"; }
+            if (random_index = 17) { let rijec = "BET"; }
+            if (random_index = 18) { let rijec = "BUG"; }
+            if (random_index = 19) { let rijec = "BUS"; }
+            if (random_index = 20) { let rijec = "CAN"; }
+            if (random_index = 21) { let rijec = "CAP"; }
+            if (random_index = 22) { let rijec = "CAR"; }
+            if (random_index = 23) { let rijec = "CAT"; }
+            if (random_index = 24) { let rijec = "COP"; }
+            if (random_index = 25) { let rijec = "COW"; }
+            if (random_index = 26) { let rijec = "CUE"; }
+            if (random_index = 27) { let rijec = "CUP"; }
+            if (random_index = 28) { let rijec = "CUT"; }
+            if (random_index = 29) { let rijec = "DAD"; }
+            if (random_index = 30) { let rijec = "DEN"; }
+            if (random_index = 31) { let rijec = "DEW"; }
+            if (random_index = 32) { let rijec = "DOG"; }
+            if (random_index = 33) { let rijec = "DOT"; }
+            if (random_index = 34) { let rijec = "DUD"; }
+            if (random_index = 35) { let rijec = "DYE"; }
+            if (random_index = 36) { let rijec = "EAR"; }
+            if (random_index = 37) { let rijec = "EEL"; }
+            if (random_index = 38) { let rijec = "EGG"; }
+            if (random_index = 39) { let rijec = "END"; }
+            if (random_index = 40) { let rijec = "ERA"; }
+            if (random_index = 41) { let rijec = "EYE"; }
+            if (random_index = 42) { let rijec = "FAN"; }
+            if (random_index = 43) { let rijec = "FAT"; }
+            if (random_index = 44) { let rijec = "FIG"; }
+            if (random_index = 45) { let rijec = "FLU"; }
+            if (random_index = 46) { let rijec = "FLY"; }
+            if (random_index = 47) { let rijec = "FOE"; }
+            if (random_index = 48) { let rijec = "FOG"; }
+            if (random_index = 49) { let rijec = "FOX"; }
+            if (random_index = 50) { let rijec = "FUN"; }
+            if (random_index = 51) { let rijec = "FUR"; }
+            if (random_index = 52) { let rijec = "GAP"; }
+            if (random_index = 53) { let rijec = "GAS"; }
+            if (random_index = 54) { let rijec = "GEL"; }
+            if (random_index = 55) { let rijec = "GEM"; }
+            if (random_index = 56) { let rijec = "GOD"; }
+            if (random_index = 57) { let rijec = "GUM"; }
+            if (random_index = 58) { let rijec = "GUN"; }
+            if (random_index = 59) { let rijec = "GUT"; }
+            if (random_index = 60) { let rijec = "GUY"; }
+            if (random_index = 61) { let rijec = "GYM"; }
+            if (random_index = 62) { let rijec = "HAG"; }
+            if (random_index = 63) { let rijec = "HAM"; }
+            if (random_index = 64) { let rijec = "HAT"; }
+            if (random_index = 65) { let rijec = "HAY"; }
+            if (random_index = 66) { let rijec = "HEM"; }
+            if (random_index = 67) { let rijec = "HEN"; }
+            if (random_index = 68) { let rijec = "HIP"; }
+            if (random_index = 69) { let rijec = "HOG"; }
+            if (random_index = 70) { let rijec = "HUB"; }
+            if (random_index = 71) { let rijec = "HUE"; }
+            if (random_index = 72) { let rijec = "HUG"; }
+            if (random_index = 73) { let rijec = "HUT"; }
+            if (random_index = 74) { let rijec = "ICE"; }
+            if (random_index = 75) { let rijec = "IMP"; }
+            if (random_index = 76) { let rijec = "INK"; }
+            if (random_index = 77) { let rijec = "INN"; }
+            if (random_index = 78) { let rijec = "JAM"; }
+            if (random_index = 79) { let rijec = "JAR"; }
+            if (random_index = 80) { let rijec = "JAW"; }
+            if (random_index = 81) { let rijec = "JET"; }
+            if (random_index = 82) { let rijec = "JOB"; }
+            if (random_index = 83) { let rijec = "JOY"; }
+            if (random_index = 84) { let rijec = "JUG"; }
+            if (random_index = 85) { let rijec = "KEY"; }
+            if (random_index = 86) { let rijec = "KID"; }
+            if (random_index = 87) { let rijec = "KIN"; }
+            if (random_index = 88) { let rijec = "KIT"; }
+            if (random_index = 89) { let rijec = "LAB"; }
+            if (random_index = 90) { let rijec = "LAD"; }
+            if (random_index = 91) { let rijec = "LAP"; }
+            if (random_index = 92) { let rijec = "LAW"; }
+            if (random_index = 93) { let rijec = "LEG"; }
+            if (random_index = 94) { let rijec = "LID"; }
+            if (random_index = 95) { let rijec = "LIE"; }
+            if (random_index = 96) { let rijec = "LIP"; }
+            if (random_index = 97) { let rijec = "LOG"; }
+            if (random_index = 98) { let rijec = "LOT"; }
+            if (random_index = 99) { let rijec = "MAN"; }
+            if (random_index = 100) { let rijec = "MAP"; }
+            if (random_index = 101) { let rijec = "MIX"; }
+            if (random_index = 102) { let rijec = "MUD"; }
+            if (random_index = 103) { let rijec = "MUG"; }
+            if (random_index = 104) { let rijec = "NAP"; }
+            if (random_index = 105) { let rijec = "NET"; }
+            if (random_index = 106) { let rijec = "NUN"; }
+            if (random_index = 107) { let rijec = "NUT"; }
+            if (random_index = 108) { let rijec = "OAK"; }
+            if (random_index = 109) { let rijec = "OAR"; }
+            if (random_index = 110) { let rijec = "ORB"; }
+            if (random_index = 111) { let rijec = "ORE"; }
+            if (random_index = 112) { let rijec = "OWL"; }
+            if (random_index = 113) { let rijec = "PAD"; }
+            if (random_index = 114) { let rijec = "PAW"; }
+            if (random_index = 115) { let rijec = "PEA"; }
+            if (random_index = 116) { let rijec = "PEN"; }
+            if (random_index = 117) { let rijec = "PET"; }
+            if (random_index = 118) { let rijec = "PIE"; }
+            if (random_index = 119) { let rijec = "PIG"; }
+            if (random_index = 120) { let rijec = "PIN"; }
+            if (random_index = 121) { let rijec = "PIT"; }
+            if (random_index = 122) { let rijec = "POD"; }
+            if (random_index = 123) { let rijec = "POT"; }
+            if (random_index = 124) { let rijec = "POX"; }
+            if (random_index = 125) { let rijec = "PUP"; }
+            if (random_index = 126) { let rijec = "RAG"; }
+            if (random_index = 127) { let rijec = "RAT"; }
+            if (random_index = 128) { let rijec = "RAY"; }
+            if (random_index = 129) { let rijec = "RIB"; }
+            if (random_index = 130) { let rijec = "RIM"; }
+            if (random_index = 131) { let rijec = "ROD"; }
+            if (random_index = 132) { let rijec = "ROW"; }
+            if (random_index = 133) { let rijec = "RUG"; }
+            if (random_index = 134) { let rijec = "SAP"; }
+            if (random_index = 135) { let rijec = "SEA"; }
+            if (random_index = 136) { let rijec = "SIN"; }
+            if (random_index = 137) { let rijec = "SIP"; }
+            if (random_index = 138) { let rijec = "SKY"; }
+            if (random_index = 139) { let rijec = "SON"; }
+            if (random_index = 140) { let rijec = "SPA"; }
+            if (random_index = 141) { let rijec = "SPY"; }
+            if (random_index = 142) { let rijec = "SUM"; }
+            if (random_index = 143) { let rijec = "SUN"; }
+            if (random_index = 144) { let rijec = "TAB"; }
+            if (random_index = 145) { let rijec = "TAG"; }
+            if (random_index = 146) { let rijec = "TEA"; }
+            if (random_index = 147) { let rijec = "TOE"; }
+            if (random_index = 148) { let rijec = "TOP"; }
+            if (random_index = 149) { let rijec = "TOW"; }
+            if (random_index = 150) { let rijec = "TOY"; }
+            if (random_index = 151) { let rijec = "TUB"; }
+            if (random_index = 152) { let rijec = "URN"; }
+            if (random_index = 153) { let rijec = "USE"; }
+            if (random_index = 154) { let rijec = "VAN"; }
+            if (random_index = 155) { let rijec = "VET"; }
+            if (random_index = 156) { let rijec = "WAR"; }
+            if (random_index = 157) { let rijec = "WAX"; }
+            if (random_index = 158) { let rijec = "WAY"; }
+            if (random_index = 159) { let rijec = "WEB"; }
+            if (random_index = 160) { let rijec = "WIG"; }
+            if (random_index = 161) { let rijec = "WIN"; }
+            if (random_index = 162) { let rijec = "WIT"; }
+            if (random_index = 163) { let rijec = "YAK"; }
+            if (random_index = 164) { let rijec = "ZOO"; }
+        }
+        if (duljina_rijeci = 4) {
+            let random_index = seed - Math.multiply(Math.divide(seed, 218), 218);
+            if (random_index = last_4word) {
+                let random_index = random_index + 50;
+                let random_index = random_index - Math.multiply(Math.divide(random_index, 218), 218);
+            }
+            let last_4word = random_index;
+            if (random_index = 0) { let rijec = "AREA"; }
+            if (random_index = 1) { let rijec = "AXIS"; }
+            if (random_index = 2) { let rijec = "BAND"; }
+            if (random_index = 3) { let rijec = "BANK"; }
+            if (random_index = 4) { let rijec = "BARN"; }
+            if (random_index = 5) { let rijec = "BASE"; }
+            if (random_index = 6) { let rijec = "BEAK"; }
+            if (random_index = 7) { let rijec = "BEAR"; }
+            if (random_index = 8) { let rijec = "BEEF"; }
+            if (random_index = 9) { let rijec = "BELL"; }
+            if (random_index = 10) { let rijec = "BILL"; }
+            if (random_index = 11) { let rijec = "BIRD"; }
+            if (random_index = 12) { let rijec = "BLOG"; }
+            if (random_index = 13) { let rijec = "BOAR"; }
+            if (random_index = 14) { let rijec = "BOAT"; }
+            if (random_index = 15) { let rijec = "BODY"; }
+            if (random_index = 16) { let rijec = "BONE"; }
+            if (random_index = 17) { let rijec = "BOOK"; }
+            if (random_index = 18) { let rijec = "BRIM"; }
+            if (random_index = 19) { let rijec = "BROW"; }
+            if (random_index = 20) { let rijec = "BULB"; }
+            if (random_index = 21) { let rijec = "BULL"; }
+            if (random_index = 22) { let rijec = "BYTE"; }
+            if (random_index = 23) { let rijec = "CAGE"; }
+            if (random_index = 24) { let rijec = "CAKE"; }
+            if (random_index = 25) { let rijec = "CARD"; }
+            if (random_index = 26) { let rijec = "CART"; }
+            if (random_index = 27) { let rijec = "CASE"; }
+            if (random_index = 28) { let rijec = "CAVE"; }
+            if (random_index = 29) { let rijec = "CELL"; }
+            if (random_index = 30) { let rijec = "CLAN"; }
+            if (random_index = 31) { let rijec = "CLAY"; }
+            if (random_index = 32) { let rijec = "CLIP"; }
+            if (random_index = 33) { let rijec = "COAL"; }
+            if (random_index = 34) { let rijec = "COAT"; }
+            if (random_index = 35) { let rijec = "CORE"; }
+            if (random_index = 36) { let rijec = "COST"; }
+            if (random_index = 37) { let rijec = "CREW"; }
+            if (random_index = 38) { let rijec = "CROP"; }
+            if (random_index = 39) { let rijec = "CUBE"; }
+            if (random_index = 40) { let rijec = "DAWN"; }
+            if (random_index = 41) { let rijec = "DEAL"; }
+            if (random_index = 42) { let rijec = "DEER"; }
+            if (random_index = 43) { let rijec = "DOCK"; }
+            if (random_index = 44) { let rijec = "DUCT"; }
+            if (random_index = 45) { let rijec = "DUNE"; }
+            if (random_index = 46) { let rijec = "DUST"; }
+            if (random_index = 47) { let rijec = "EDGE"; }
+            if (random_index = 48) { let rijec = "ENVY"; }
+            if (random_index = 49) { let rijec = "FACE"; }
+            if (random_index = 50) { let rijec = "FACT"; }
+            if (random_index = 51) { let rijec = "FAME"; }
+            if (random_index = 52) { let rijec = "FANG"; }
+            if (random_index = 53) { let rijec = "FARM"; }
+            if (random_index = 54) { let rijec = "FATE"; }
+            if (random_index = 55) { let rijec = "FINE"; }
+            if (random_index = 56) { let rijec = "FISH"; }
+            if (random_index = 57) { let rijec = "FIST"; }
+            if (random_index = 58) { let rijec = "FLAG"; }
+            if (random_index = 59) { let rijec = "FLEA"; }
+            if (random_index = 60) { let rijec = "FOAM"; }
+            if (random_index = 61) { let rijec = "FORK"; }
+            if (random_index = 62) { let rijec = "FORM"; }
+            if (random_index = 63) { let rijec = "FUND"; }
+            if (random_index = 64) { let rijec = "FURY"; }
+            if (random_index = 65) { let rijec = "GAIT"; }
+            if (random_index = 66) { let rijec = "GATE"; }
+            if (random_index = 67) { let rijec = "GEAR"; }
+            if (random_index = 68) { let rijec = "GIFT"; }
+            if (random_index = 69) { let rijec = "GLUE"; }
+            if (random_index = 70) { let rijec = "GOAL"; }
+            if (random_index = 71) { let rijec = "GOAT"; }
+            if (random_index = 72) { let rijec = "GOLD"; }
+            if (random_index = 73) { let rijec = "GOWN"; }
+            if (random_index = 74) { let rijec = "GUNK"; }
+            if (random_index = 75) { let rijec = "HAIR"; }
+            if (random_index = 76) { let rijec = "HALL"; }
+            if (random_index = 77) { let rijec = "HAND"; }
+            if (random_index = 78) { let rijec = "HARE"; }
+            if (random_index = 79) { let rijec = "HEAT"; }
+            if (random_index = 80) { let rijec = "HERO"; }
+            if (random_index = 81) { let rijec = "HILL"; }
+            if (random_index = 82) { let rijec = "HINT"; }
+            if (random_index = 83) { let rijec = "HOLE"; }
+            if (random_index = 84) { let rijec = "HOME"; }
+            if (random_index = 85) { let rijec = "HORN"; }
+            if (random_index = 86) { let rijec = "HOSE"; }
+            if (random_index = 87) { let rijec = "HOST"; }
+            if (random_index = 88) { let rijec = "HOUR"; }
+            if (random_index = 89) { let rijec = "IDEA"; }
+            if (random_index = 90) { let rijec = "INCH"; }
+            if (random_index = 91) { let rijec = "IRON"; }
+            if (random_index = 92) { let rijec = "JAZZ"; }
+            if (random_index = 93) { let rijec = "JURY"; }
+            if (random_index = 94) { let rijec = "KITE"; }
+            if (random_index = 95) { let rijec = "KNOB"; }
+            if (random_index = 96) { let rijec = "KNOT"; }
+            if (random_index = 97) { let rijec = "LAMB"; }
+            if (random_index = 98) { let rijec = "LAND"; }
+            if (random_index = 99) { let rijec = "LAVA"; }
+            if (random_index = 100) { let rijec = "LAWN"; }
+            if (random_index = 101) { let rijec = "LEAF"; }
+            if (random_index = 102) { let rijec = "LION"; }
+            if (random_index = 103) { let rijec = "LOGO"; }
+            if (random_index = 104) { let rijec = "LOOP"; }
+            if (random_index = 105) { let rijec = "LOSS"; }
+            if (random_index = 106) { let rijec = "LOVE"; }
+            if (random_index = 107) { let rijec = "LUCK"; }
+            if (random_index = 108) { let rijec = "MACE"; }
+            if (random_index = 109) { let rijec = "MALL"; }
+            if (random_index = 110) { let rijec = "MASS"; }
+            if (random_index = 111) { let rijec = "MEAL"; }
+            if (random_index = 112) { let rijec = "MEAT"; }
+            if (random_index = 113) { let rijec = "MILE"; }
+            if (random_index = 114) { let rijec = "MILK"; }
+            if (random_index = 115) { let rijec = "MOLE"; }
+            if (random_index = 116) { let rijec = "MOSS"; }
+            if (random_index = 117) { let rijec = "MOTH"; }
+            if (random_index = 118) { let rijec = "MULE"; }
+            if (random_index = 119) { let rijec = "MYTH"; }
+            if (random_index = 120) { let rijec = "NAIL"; }
+            if (random_index = 121) { let rijec = "NAME"; }
+            if (random_index = 122) { let rijec = "NAVY"; }
+            if (random_index = 123) { let rijec = "NEST"; }
+            if (random_index = 124) { let rijec = "NOTE"; }
+            if (random_index = 125) { let rijec = "NUKE"; }
+            if (random_index = 126) { let rijec = "OATH"; }
+            if (random_index = 127) { let rijec = "ODOR"; }
+            if (random_index = 128) { let rijec = "OMEN"; }
+            if (random_index = 129) { let rijec = "ORCA"; }
+            if (random_index = 130) { let rijec = "PACT"; }
+            if (random_index = 131) { let rijec = "PAGE"; }
+            if (random_index = 132) { let rijec = "PARK"; }
+            if (random_index = 133) { let rijec = "PART"; }
+            if (random_index = 134) { let rijec = "PAST"; }
+            if (random_index = 135) { let rijec = "PATH"; }
+            if (random_index = 136) { let rijec = "PEAK"; }
+            if (random_index = 137) { let rijec = "PEAR"; }
+            if (random_index = 138) { let rijec = "PEST"; }
+            if (random_index = 139) { let rijec = "PILE"; }
+            if (random_index = 140) { let rijec = "PLAN"; }
+            if (random_index = 141) { let rijec = "POEM"; }
+            if (random_index = 142) { let rijec = "POLE"; }
+            if (random_index = 143) { let rijec = "POOL"; }
+            if (random_index = 144) { let rijec = "PORE"; }
+            if (random_index = 145) { let rijec = "PORT"; }
+            if (random_index = 146) { let rijec = "POST"; }
+            if (random_index = 147) { let rijec = "QUIZ"; }
+            if (random_index = 148) { let rijec = "RACE"; }
+            if (random_index = 149) { let rijec = "RAIL"; }
+            if (random_index = 150) { let rijec = "RAIN"; }
+            if (random_index = 151) { let rijec = "RENT"; }
+            if (random_index = 152) { let rijec = "RICE"; }
+            if (random_index = 153) { let rijec = "RING"; }
+            if (random_index = 154) { let rijec = "RIOT"; }
+            if (random_index = 155) { let rijec = "RISK"; }
+            if (random_index = 156) { let rijec = "ROAD"; }
+            if (random_index = 157) { let rijec = "ROAR"; }
+            if (random_index = 158) { let rijec = "ROCK"; }
+            if (random_index = 159) { let rijec = "ROLE"; }
+            if (random_index = 160) { let rijec = "ROPE"; }
+            if (random_index = 161) { let rijec = "ROOT"; }
+            if (random_index = 162) { let rijec = "ROSE"; }
+            if (random_index = 163) { let rijec = "RULE"; }
+            if (random_index = 164) { let rijec = "SAFE"; }
+            if (random_index = 165) { let rijec = "SAGE"; }
+            if (random_index = 166) { let rijec = "SALT"; }
+            if (random_index = 167) { let rijec = "SAND"; }
+            if (random_index = 168) { let rijec = "SCAR"; }
+            if (random_index = 169) { let rijec = "SEAT"; }
+            if (random_index = 170) { let rijec = "SHIP"; }
+            if (random_index = 171) { let rijec = "SHOE"; }
+            if (random_index = 172) { let rijec = "SHOP"; }
+            if (random_index = 173) { let rijec = "SHOW"; }
+            if (random_index = 174) { let rijec = "SIDE"; }
+            if (random_index = 175) { let rijec = "SIGN"; }
+            if (random_index = 176) { let rijec = "SITE"; }
+            if (random_index = 177) { let rijec = "SKIN"; }
+            if (random_index = 178) { let rijec = "SNOW"; }
+            if (random_index = 179) { let rijec = "SOIL"; }
+            if (random_index = 180) { let rijec = "SOUL"; }
+            if (random_index = 181) { let rijec = "STAR"; }
+            if (random_index = 182) { let rijec = "STEM"; }
+            if (random_index = 183) { let rijec = "STEW"; }
+            if (random_index = 184) { let rijec = "SUIT"; }
+            if (random_index = 185) { let rijec = "SWAN"; }
+            if (random_index = 186) { let rijec = "TAIL"; }
+            if (random_index = 187) { let rijec = "TALE"; }
+            if (random_index = 188) { let rijec = "TANK"; }
+            if (random_index = 189) { let rijec = "TASK"; }
+            if (random_index = 190) { let rijec = "TEAM"; }
+            if (random_index = 191) { let rijec = "TEAR"; }
+            if (random_index = 192) { let rijec = "TECH"; }
+            if (random_index = 193) { let rijec = "TERM"; }
+            if (random_index = 194) { let rijec = "TEST"; }
+            if (random_index = 195) { let rijec = "TOMB"; }
+            if (random_index = 196) { let rijec = "TONE"; }
+            if (random_index = 197) { let rijec = "TOUR"; }
+            if (random_index = 198) { let rijec = "TRAP"; }
+            if (random_index = 199) { let rijec = "TUNA"; }
+            if (random_index = 200) { let rijec = "TURN"; }
+            if (random_index = 201) { let rijec = "TWIN"; }
+            if (random_index = 202) { let rijec = "VEIN"; }
+            if (random_index = 203) { let rijec = "VIEW"; }
+            if (random_index = 204) { let rijec = "VINE"; }
+            if (random_index = 205) { let rijec = "VOID"; }
+            if (random_index = 206) { let rijec = "WALL"; }
+            if (random_index = 207) { let rijec = "WASP"; }
+            if (random_index = 208) { let rijec = "WAVE"; }
+            if (random_index = 209) { let rijec = "WIND"; }
+            if (random_index = 210) { let rijec = "WISH"; }
+            if (random_index = 211) { let rijec = "WOLF"; }
+            if (random_index = 212) { let rijec = "WORD"; }
+            if (random_index = 213) { let rijec = "WORK"; }
+            if (random_index = 214) { let rijec = "WORM"; }
+            if (random_index = 215) { let rijec = "YARD"; }
+            if (random_index = 216) { let rijec = "YEAR"; }
+            if (random_index = 217) { let rijec = "ZONE"; }
+        }
+        if (duljina_rijeci = 5) {
+            let random_index = seed - Math.multiply(Math.divide(seed, 281), 281);
+            if (random_index = last_5word) {
+                let random_index = random_index + 50;
+                let random_index = random_index - Math.multiply(Math.divide(random_index, 281), 281);
+            }
+            let last_5word = random_index;
+            if (random_index = 0) { let rijec = "ABYSS"; }
+            if (random_index = 1) { let rijec = "ACORN"; }
+            if (random_index = 2) { let rijec = "ACTOR"; }
+            if (random_index = 3) { let rijec = "ADULT"; }
+            if (random_index = 4) { let rijec = "AGONY"; }
+            if (random_index = 5) { let rijec = "ALBUM"; }
+            if (random_index = 6) { let rijec = "ALIEN"; }
+            if (random_index = 7) { let rijec = "ALLEY"; }
+            if (random_index = 8) { let rijec = "AMBER"; }
+            if (random_index = 9) { let rijec = "ANKLE"; }
+            if (random_index = 10) { let rijec = "ANNEX"; }
+            if (random_index = 11) { let rijec = "APPLE"; }
+            if (random_index = 12) { let rijec = "ARENA"; }
+            if (random_index = 13) { let rijec = "AROMA"; }
+            if (random_index = 14) { let rijec = "ARROW"; }
+            if (random_index = 15) { let rijec = "AUDIO"; }
+            if (random_index = 16) { let rijec = "BACON"; }
+            if (random_index = 17) { let rijec = "BADGE"; }
+            if (random_index = 18) { let rijec = "BAKER"; }
+            if (random_index = 19) { let rijec = "BEACH"; }
+            if (random_index = 20) { let rijec = "BELLY"; }
+            if (random_index = 21) { let rijec = "BIRCH"; }
+            if (random_index = 22) { let rijec = "BLADE"; }
+            if (random_index = 23) { let rijec = "BLAST"; }
+            if (random_index = 24) { let rijec = "BLOOD"; }
+            if (random_index = 25) { let rijec = "BOARD"; }
+            if (random_index = 26) { let rijec = "BOXER"; }
+            if (random_index = 27) { let rijec = "BRAKE"; }
+            if (random_index = 28) { let rijec = "BREAD"; }
+            if (random_index = 29) { let rijec = "BRICK"; }
+            if (random_index = 30) { let rijec = "BROOM"; }
+            if (random_index = 31) { let rijec = "BROTH"; }
+            if (random_index = 32) { let rijec = "CABLE"; }
+            if (random_index = 33) { let rijec = "CACHE"; }
+            if (random_index = 34) { let rijec = "CAMEL"; }
+            if (random_index = 35) { let rijec = "CANDY"; }
+            if (random_index = 36) { let rijec = "CARGO"; }
+            if (random_index = 37) { let rijec = "CHAIR"; }
+            if (random_index = 38) { let rijec = "CHALK"; }
+            if (random_index = 39) { let rijec = "CHEST"; }
+            if (random_index = 40) { let rijec = "CLASS"; }
+            if (random_index = 41) { let rijec = "CLOUD"; }
+            if (random_index = 42) { let rijec = "CLOWN"; }
+            if (random_index = 43) { let rijec = "COACH"; }
+            if (random_index = 44) { let rijec = "COAST"; }
+            if (random_index = 45) { let rijec = "COMET"; }
+            if (random_index = 46) { let rijec = "CURSE"; }
+            if (random_index = 47) { let rijec = "DAIRY"; }
+            if (random_index = 48) { let rijec = "DEATH"; }
+            if (random_index = 49) { let rijec = "DEITY"; }
+            if (random_index = 50) { let rijec = "DEMON"; }
+            if (random_index = 51) { let rijec = "DIARY"; }
+            if (random_index = 52) { let rijec = "DONOR"; }
+            if (random_index = 53) { let rijec = "DRAMA"; }
+            if (random_index = 54) { let rijec = "DRESS"; }
+            if (random_index = 55) { let rijec = "DRONE"; }
+            if (random_index = 56) { let rijec = "DWARF"; }
+            if (random_index = 57) { let rijec = "EAGLE"; }
+            if (random_index = 58) { let rijec = "ELBOW"; }
+            if (random_index = 59) { let rijec = "ELDER"; }
+            if (random_index = 60) { let rijec = "ERROR"; }
+            if (random_index = 61) { let rijec = "ESSAY"; }
+            if (random_index = 62) { let rijec = "FAITH"; }
+            if (random_index = 63) { let rijec = "FAUNA"; }
+            if (random_index = 64) { let rijec = "FEAST"; }
+            if (random_index = 65) { let rijec = "FIELD"; }
+            if (random_index = 66) { let rijec = "FLAME"; }
+            if (random_index = 67) { let rijec = "FLANK"; }
+            if (random_index = 68) { let rijec = "FLEET"; }
+            if (random_index = 69) { let rijec = "FLESH"; }
+            if (random_index = 70) { let rijec = "FLOOR"; }
+            if (random_index = 71) { let rijec = "FLORA"; }
+            if (random_index = 72) { let rijec = "FLOUR"; }
+            if (random_index = 73) { let rijec = "FLUTE"; }
+            if (random_index = 74) { let rijec = "FRAME"; }
+            if (random_index = 75) { let rijec = "FROST"; }
+            if (random_index = 76) { let rijec = "GENRE"; }
+            if (random_index = 77) { let rijec = "GIANT"; }
+            if (random_index = 78) { let rijec = "GLASS"; }
+            if (random_index = 79) { let rijec = "GOOSE"; }
+            if (random_index = 80) { let rijec = "GRAIN"; }
+            if (random_index = 81) { let rijec = "GRAVE"; }
+            if (random_index = 82) { let rijec = "GREED"; }
+            if (random_index = 83) { let rijec = "GRIEF"; }
+            if (random_index = 84) { let rijec = "GUEST"; }
+            if (random_index = 85) { let rijec = "GUIDE"; }
+            if (random_index = 86) { let rijec = "GUILD"; }
+            if (random_index = 87) { let rijec = "HABIT"; }
+            if (random_index = 88) { let rijec = "HAVOC"; }
+            if (random_index = 89) { let rijec = "HEART"; }
+            if (random_index = 90) { let rijec = "HEDGE"; }
+            if (random_index = 91) { let rijec = "HELIX"; }
+            if (random_index = 92) { let rijec = "HOBBY"; }
+            if (random_index = 93) { let rijec = "HORSE"; }
+            if (random_index = 94) { let rijec = "HUMAN"; }
+            if (random_index = 95) { let rijec = "HYDRA"; }
+            if (random_index = 96) { let rijec = "IGLOO"; }
+            if (random_index = 97) { let rijec = "IMAGE"; }
+            if (random_index = 98) { let rijec = "INDEX"; }
+            if (random_index = 99) { let rijec = "JEANS"; }
+            if (random_index = 100) { let rijec = "JEWEL"; }
+            if (random_index = 101) { let rijec = "JOINT"; }
+            if (random_index = 102) { let rijec = "JOKER"; }
+            if (random_index = 103) { let rijec = "JUDGE"; }
+            if (random_index = 104) { let rijec = "JUICE"; }
+            if (random_index = 105) { let rijec = "KARMA"; }
+            if (random_index = 106) { let rijec = "KNIFE"; }
+            if (random_index = 107) { let rijec = "LABEL"; }
+            if (random_index = 108) { let rijec = "LAYER"; }
+            if (random_index = 109) { let rijec = "LEMON"; }
+            if (random_index = 110) { let rijec = "LIMIT"; }
+            if (random_index = 111) { let rijec = "LOBBY"; }
+            if (random_index = 112) { let rijec = "LOTUS"; }
+            if (random_index = 113) { let rijec = "MAGIC"; }
+            if (random_index = 114) { let rijec = "MANOR"; }
+            if (random_index = 115) { let rijec = "MELON"; }
+            if (random_index = 116) { let rijec = "MERCY"; }
+            if (random_index = 117) { let rijec = "MINER"; }
+            if (random_index = 118) { let rijec = "MONEY"; }
+            if (random_index = 119) { let rijec = "MONTH"; }
+            if (random_index = 120) { let rijec = "MOTOR"; }
+            if (random_index = 121) { let rijec = "NICHE"; }
+            if (random_index = 122) { let rijec = "NIECE"; }
+            if (random_index = 123) { let rijec = "NIGHT"; }
+            if (random_index = 124) { let rijec = "NOISE"; }
+            if (random_index = 125) { let rijec = "NOMAD"; }
+            if (random_index = 126) { let rijec = "OASIS"; }
+            if (random_index = 127) { let rijec = "OCEAN"; }
+            if (random_index = 128) { let rijec = "OFFER"; }
+            if (random_index = 129) { let rijec = "ONION"; }
+            if (random_index = 130) { let rijec = "OPERA"; }
+            if (random_index = 131) { let rijec = "OPIUM"; }
+            if (random_index = 132) { let rijec = "ORBIT"; }
+            if (random_index = 133) { let rijec = "ORDER"; }
+            if (random_index = 134) { let rijec = "ORGAN"; }
+            if (random_index = 135) { let rijec = "OTTER"; }
+            if (random_index = 136) { let rijec = "OWNER"; }
+            if (random_index = 137) { let rijec = "OZONE"; }
+            if (random_index = 138) { let rijec = "PAINT"; }
+            if (random_index = 139) { let rijec = "PANEL"; }
+            if (random_index = 140) { let rijec = "PANIC"; }
+            if (random_index = 141) { let rijec = "PANTS"; }
+            if (random_index = 142) { let rijec = "PAPER"; }
+            if (random_index = 143) { let rijec = "PARTY"; }
+            if (random_index = 144) { let rijec = "PATCH"; }
+            if (random_index = 145) { let rijec = "PATIO"; }
+            if (random_index = 146) { let rijec = "PEACE"; }
+            if (random_index = 147) { let rijec = "PEACH"; }
+            if (random_index = 148) { let rijec = "PEARL"; }
+            if (random_index = 149) { let rijec = "PEDAL"; }
+            if (random_index = 150) { let rijec = "PETAL"; }
+            if (random_index = 151) { let rijec = "PHASE"; }
+            if (random_index = 152) { let rijec = "PHONE"; }
+            if (random_index = 153) { let rijec = "PHOTO"; }
+            if (random_index = 154) { let rijec = "PIANO"; }
+            if (random_index = 155) { let rijec = "PILOT"; }
+            if (random_index = 156) { let rijec = "PLANE"; }
+            if (random_index = 157) { let rijec = "PLANK"; }
+            if (random_index = 158) { let rijec = "PLATE"; }
+            if (random_index = 159) { let rijec = "PLAZA"; }
+            if (random_index = 160) { let rijec = "POINT"; }
+            if (random_index = 161) { let rijec = "POKER"; }
+            if (random_index = 162) { let rijec = "POWER"; }
+            if (random_index = 163) { let rijec = "PRANK"; }
+            if (random_index = 164) { let rijec = "PRICE"; }
+            if (random_index = 165) { let rijec = "PRIDE"; }
+            if (random_index = 166) { let rijec = "PRISM"; }
+            if (random_index = 167) { let rijec = "PRIZE"; }
+            if (random_index = 168) { let rijec = "PROOF"; }
+            if (random_index = 169) { let rijec = "PULSE"; }
+            if (random_index = 170) { let rijec = "PURSE"; }
+            if (random_index = 171) { let rijec = "QUEEN"; }
+            if (random_index = 172) { let rijec = "QUEST"; }
+            if (random_index = 173) { let rijec = "QUEUE"; }
+            if (random_index = 174) { let rijec = "QUOTA"; }
+            if (random_index = 175) { let rijec = "RADIO"; }
+            if (random_index = 176) { let rijec = "RATIO"; }
+            if (random_index = 177) { let rijec = "RAZOR"; }
+            if (random_index = 178) { let rijec = "REALM"; }
+            if (random_index = 179) { let rijec = "REBEL"; }
+            if (random_index = 180) { let rijec = "REIGN"; }
+            if (random_index = 181) { let rijec = "RELIC"; }
+            if (random_index = 182) { let rijec = "RHYME"; }
+            if (random_index = 183) { let rijec = "RIDER"; }
+            if (random_index = 184) { let rijec = "RIVAL"; }
+            if (random_index = 185) { let rijec = "RIVER"; }
+            if (random_index = 186) { let rijec = "ROGUE"; }
+            if (random_index = 187) { let rijec = "RULER"; }
+            if (random_index = 188) { let rijec = "SALAD"; }
+            if (random_index = 189) { let rijec = "SALON"; }
+            if (random_index = 190) { let rijec = "SAUCE"; }
+            if (random_index = 191) { let rijec = "SCENE"; }
+            if (random_index = 192) { let rijec = "SERUM"; }
+            if (random_index = 193) { let rijec = "SEWER"; }
+            if (random_index = 194) { let rijec = "SHADE"; }
+            if (random_index = 195) { let rijec = "SHARK"; }
+            if (random_index = 196) { let rijec = "SHEEP"; }
+            if (random_index = 197) { let rijec = "SIEGE"; }
+            if (random_index = 198) { let rijec = "SIGHT"; }
+            if (random_index = 199) { let rijec = "SIREN"; }
+            if (random_index = 200) { let rijec = "SLANG"; }
+            if (random_index = 201) { let rijec = "SLICE"; }
+            if (random_index = 202) { let rijec = "SMELL"; }
+            if (random_index = 203) { let rijec = "SMILE"; }
+            if (random_index = 204) { let rijec = "SNAIL"; }
+            if (random_index = 205) { let rijec = "SNAKE"; }
+            if (random_index = 206) { let rijec = "SPACE"; }
+            if (random_index = 207) { let rijec = "SPEAR"; }
+            if (random_index = 208) { let rijec = "SPICE"; }
+            if (random_index = 209) { let rijec = "SPORE"; }
+            if (random_index = 210) { let rijec = "SPORT"; }
+            if (random_index = 211) { let rijec = "SQUAD"; }
+            if (random_index = 212) { let rijec = "STAMP"; }
+            if (random_index = 213) { let rijec = "STEAK"; }
+            if (random_index = 214) { let rijec = "STEAM"; }
+            if (random_index = 215) { let rijec = "STONE"; }
+            if (random_index = 216) { let rijec = "STORM"; }
+            if (random_index = 217) { let rijec = "STUFF"; }
+            if (random_index = 218) { let rijec = "SUGAR"; }
+            if (random_index = 219) { let rijec = "SWAMP"; }
+            if (random_index = 220) { let rijec = "SWARM"; }
+            if (random_index = 221) { let rijec = "TABLE"; }
+            if (random_index = 222) { let rijec = "TEMPO"; }
+            if (random_index = 223) { let rijec = "THEFT"; }
+            if (random_index = 224) { let rijec = "THEME"; }
+            if (random_index = 225) { let rijec = "THIEF"; }
+            if (random_index = 226) { let rijec = "THIGH"; }
+            if (random_index = 227) { let rijec = "THUMB"; }
+            if (random_index = 228) { let rijec = "TIARA"; }
+            if (random_index = 229) { let rijec = "TIGER"; }
+            if (random_index = 230) { let rijec = "TOAST"; }
+            if (random_index = 231) { let rijec = "TOOTH"; }
+            if (random_index = 232) { let rijec = "TOPIC"; }
+            if (random_index = 233) { let rijec = "TORCH"; }
+            if (random_index = 234) { let rijec = "TORSO"; }
+            if (random_index = 235) { let rijec = "TOWEL"; }
+            if (random_index = 236) { let rijec = "TOWER"; }
+            if (random_index = 237) { let rijec = "TRACK"; }
+            if (random_index = 238) { let rijec = "TRAIN"; }
+            if (random_index = 239) { let rijec = "TRAIT"; }
+            if (random_index = 240) { let rijec = "TREAT"; }
+            if (random_index = 241) { let rijec = "TREND"; }
+            if (random_index = 242) { let rijec = "TROLL"; }
+            if (random_index = 243) { let rijec = "TROOP"; }
+            if (random_index = 244) { let rijec = "TRUTH"; }
+            if (random_index = 245) { let rijec = "TULIP"; }
+            if (random_index = 246) { let rijec = "TUTOR"; }
+            if (random_index = 247) { let rijec = "ULCER"; }
+            if (random_index = 248) { let rijec = "UNCLE"; }
+            if (random_index = 249) { let rijec = "UNION"; }
+            if (random_index = 250) { let rijec = "UNITY"; }
+            if (random_index = 251) { let rijec = "VALUE"; }
+            if (random_index = 252) { let rijec = "VAULT"; }
+            if (random_index = 253) { let rijec = "VENOM"; }
+            if (random_index = 254) { let rijec = "VIDEO"; }
+            if (random_index = 255) { let rijec = "VIRUS"; }
+            if (random_index = 256) { let rijec = "VIXEN"; }
+            if (random_index = 257) { let rijec = "VODKA"; }
+            if (random_index = 258) { let rijec = "VOTER"; }
+            if (random_index = 259) { let rijec = "WAGON"; }
+            if (random_index = 260) { let rijec = "WASTE"; }
+            if (random_index = 261) { let rijec = "WATCH"; }
+            if (random_index = 262) { let rijec = "WATER"; }
+            if (random_index = 263) { let rijec = "WENCH"; }
+            if (random_index = 264) { let rijec = "WHALE"; }
+            if (random_index = 265) { let rijec = "WHARF"; }
+            if (random_index = 266) { let rijec = "WHEAT"; }
+            if (random_index = 267) { let rijec = "WHEEL"; }
+            if (random_index = 268) { let rijec = "WIDOW"; }
+            if (random_index = 269) { let rijec = "WIDTH"; }
+            if (random_index = 270) { let rijec = "WITCH"; }
+            if (random_index = 271) { let rijec = "WOMAN"; }
+            if (random_index = 272) { let rijec = "WORLD"; }
+            if (random_index = 273) { let rijec = "WORTH"; }
+            if (random_index = 274) { let rijec = "WOUND"; }
+            if (random_index = 275) { let rijec = "WRATH"; }
+            if (random_index = 276) { let rijec = "WRIST"; }
+            if (random_index = 277) { let rijec = "YACHT"; }
+            if (random_index = 278) { let rijec = "YEAST"; }
+            if (random_index = 279) { let rijec = "YOUTH"; }
+            if (random_index = 280) { let rijec = "ZEBRA"; }
+        }
+
+        return;
+    }
+
+    method void crtaj(int slovo, bool pogodio, bool narancasto, int x, int y, bool kucica) {
+        if (kucica = true) {
+            do Screen.setColor(1);
+            do Screen.drawRectangle(x, y, x+29, y+35);
+            do Screen.setColor(0);
+            do Screen.drawRectangle(x+1, y+1, x+28, y+34);
+
+            if (pogodio = true) {  // ZELENO
+                do Screen.setColor(1);
+                do Screen.drawRectangle(x+1, y+1, x+28, y+34);
+            }
+            if (narancasto = true) {  // NARANCASTO
+                do Screen.setColor(1);
+                do Screen.drawRectangle(x+1, y+1, x+28, y+34);
+                do Screen.setColor(0);
+                do Screen.drawRectangle(x+4, y+4, x+25, y+31);
+            }
+        }
+        else {
+            do Screen.setColor(0);
+            do Screen.drawRectangle(x, y, x+29, y+35);
+        }
+    
+        if (pogodio = true) { do Screen.setColor(0); }
+        else { do Screen.setColor(1); }
+
+        if (slovo = 0) { return; }
+
+        if (slovo = 95) {  // _
+            do Screen.drawLine(x+9, y+29, x+20, y+29);
+            do Screen.drawLine(x+9, y+28, x+20, y+28);
+            return;
+        }
+
+        if ((slovo = 65) | (slovo = 97)) {  // A/a
+            do Screen.drawLine(x+6, y+29, x+14, y+6);
+            do Screen.drawLine(x+7, y+29, x+15, y+6);
+            do Screen.drawLine(x+23, y+29, x+15, y+6);
+            do Screen.drawLine(x+22, y+29, x+14, y+6);
+            do Screen.drawLine(x+10, y+20, x+20, y+20);
+            do Screen.drawLine(x+10, y+19, x+19, y+19);
+            return;
+        }
+
+        if ((slovo = 66) | (slovo = 98)) { // B/b
+            do Screen.drawLine(x+6, y+6, x+6, y+29);
+            do Screen.drawLine(x+7, y+6, x+7, y+29);
+
+            do Screen.drawLine(x+6, y+6, x+10, y+6);
+            do Screen.drawLine(x+6, y+15, x+10, y+15);
+            do Screen.drawLine(x+7, y+7, x+11, y+7);
+            do Screen.drawLine(x+7, y+14, x+11, y+14);
+
+            do Screen.drawLine(x+10, y+6, x+15, y+7);
+            do Screen.drawLine(x+10, y+15, x+15, y+14);
+            do Screen.drawLine(x+11, y+7, x+16, y+8);
+            do Screen.drawLine(x+11, y+14, x+16, y+13);
+
+            do Screen.drawLine(x+15, y+7, x+18, y+8);
+            do Screen.drawLine(x+15, y+14, x+18, y+13);
+            do Screen.drawLine(x+16, y+8, x+19, y+9);
+            do Screen.drawLine(x+16, y+13, x+19, y+12);
+
+            do Screen.drawLine(x+18, y+8, x+19, y+9);
+            do Screen.drawLine(x+18, y+13, x+19, y+12);
+            do Screen.drawLine(x+19, y+9, x+20, y+10);
+            do Screen.drawLine(x+19, y+12, x+20, y+11);
+
+            do Screen.drawLine(x+19, y+9, x+20, y+10);
+            do Screen.drawLine(x+19, y+12, x+20, y+11);
+            do Screen.drawLine(x+19, y+10, x+20, y+11);
+            do Screen.drawLine(x+19, y+11, x+20, y+10);
+
+
+            do Screen.drawLine(x+6, y+15, x+17, y+15);
+            do Screen.drawLine(x+6, y+16, x+17, y+16);
+            do Screen.drawLine(x+6, y+29, x+17, y+29);
+            do Screen.drawLine(x+6, y+28, x+17, y+28);
+
+            do Screen.drawLine(x+17, y+15, x+19, y+16);
+            do Screen.drawLine(x+17, y+29, x+19, y+28);
+            do Screen.drawLine(x+17, y+16, x+19, y+17);
+            do Screen.drawLine(x+17, y+28, x+19, y+27);
+
+            do Screen.drawLine(x+19, y+16, x+21, y+18);
+            do Screen.drawLine(x+19, y+28, x+21, y+26);
+            do Screen.drawLine(x+19, y+17, x+21, y+19);
+            do Screen.drawLine(x+19, y+27, x+21, y+25);
+
+            do Screen.drawLine(x+21, y+18, x+22, y+21);
+            do Screen.drawLine(x+21, y+26, x+22, y+23);
+            do Screen.drawLine(x+21, y+19, x+22, y+22);
+            do Screen.drawLine(x+21, y+25, x+22, y+22);
+
+            do Screen.drawLine(x+22, y+21, x+22, y+22);
+            do Screen.drawLine(x+22, y+23, x+22, y+22);
+            return;
+        }
+
+        if ((slovo = 67) | (slovo = 99)) {  // C/c
+            do Screen.drawLine(x+23, y+6, x+15, y+6);
+            do Screen.drawLine(x+23, y+29, x+15, y+29);
+            do Screen.drawLine(x+23, y+7, x+15, y+7);
+            do Screen.drawLine(x+23, y+28, x+15, y+28);
+
+            do Screen.drawLine(x+15, y+6, x+10, y+9);
+            do Screen.drawLine(x+15, y+29, x+10, y+26);
+            do Screen.drawLine(x+15, y+7, x+10, y+10);
+            do Screen.drawLine(x+15, y+28, x+10, y+25);
+
+            do Screen.drawLine(x+10, y+9, x+7, y+14);
+            do Screen.drawLine(x+10, y+26, x+7, y+21);
+            do Screen.drawLine(x+10, y+10, x+7, y+15);
+            do Screen.drawLine(x+10, y+25, x+7, y+20);
+
+            do Screen.drawLine(x+7, y+14, x+6, y+17);
+            do Screen.drawLine(x+7, y+21, x+6, y+18);
+            do Screen.drawLine(x+7, y+15, x+7, y+18);
+            do Screen.drawLine(x+7, y+20, x+7, y+17);
+            return;
+        }
+
+        if ((slovo = 68) | (slovo = 100)) {  // D/d
+            do Screen.drawLine(x+6, y+6, x+6, y+29);
+            do Screen.drawLine(x+7, y+6, x+7, y+29);
+
+            do Screen.drawLine(x+6, y+6, x+14, y+6);
+            do Screen.drawLine(x+6, y+29, x+14, y+29);
+            do Screen.drawLine(x+6, y+7, x+14, y+7);
+            do Screen.drawLine(x+6, y+28, x+14, y+28);
+
+            do Screen.drawLine(x+14, y+6, x+19, y+9);
+            do Screen.drawLine(x+14, y+29, x+19, y+26);
+            do Screen.drawLine(x+14, y+7, x+19, y+10);
+            do Screen.drawLine(x+14, y+28, x+19, y+25);
+
+            do Screen.drawLine(x+19, y+9, x+22, y+14);
+            do Screen.drawLine(x+19, y+26, x+22, y+21);
+            do Screen.drawLine(x+19, y+10, x+22, y+15);
+            do Screen.drawLine(x+19, y+25, x+22, y+20);
+
+            do Screen.drawLine(x+22, y+14, x+23, y+17);
+            do Screen.drawLine(x+22, y+21, x+23, y+18);
+            do Screen.drawLine(x+22, y+15, x+22, y+18);
+            do Screen.drawLine(x+22, y+20, x+22, y+17);
+            return;
+        }
+
+        if ((slovo = 69) | (slovo = 101)) { // E/e
+            do Screen.drawLine(x+6, y+6, x+6, y+29);
+            do Screen.drawLine(x+7, y+6, x+7, y+29);
+            do Screen.drawLine(x+6, y+6, x+23, y+6);
+            do Screen.drawLine(x+6, y+7, x+23, y+7);
+            do Screen.drawLine(x+6, y+29, x+23, y+29);
+            do Screen.drawLine(x+6, y+28, x+23, y+28);
+            do Screen.drawLine(x+6, y+18, x+18, y+18);
+            do Screen.drawLine(x+6, y+17, x+18, y+17);
+            return;
+        }
+
+        if ((slovo = 70) | (slovo = 102)) { // F/f
+            do Screen.drawLine(x+6, y+6, x+6, y+29);
+            do Screen.drawLine(x+7, y+6, x+7, y+29);
+            do Screen.drawLine(x+6, y+6, x+23, y+6);
+            do Screen.drawLine(x+6, y+7, x+23, y+7);
+            do Screen.drawLine(x+6, y+18, x+18, y+18);
+            do Screen.drawLine(x+6, y+17, x+18, y+17);
+            return;
+        }
+
+        if ((slovo = 71) | (slovo = 103)) { // G/g
+            do Screen.drawLine(x+23, y+6, x+15, y+6);
+            do Screen.drawLine(x+23, y+29, x+15, y+29);
+            do Screen.drawLine(x+23, y+7, x+15, y+7);
+            do Screen.drawLine(x+23, y+28, x+15, y+28);
+
+            do Screen.drawLine(x+15, y+6, x+10, y+9);
+            do Screen.drawLine(x+15, y+29, x+10, y+26);
+            do Screen.drawLine(x+15, y+7, x+10, y+10);
+            do Screen.drawLine(x+15, y+28, x+10, y+25);
+
+            do Screen.drawLine(x+10, y+9, x+7, y+14);
+            do Screen.drawLine(x+10, y+26, x+7, y+21);
+            do Screen.drawLine(x+10, y+10, x+7, y+15);
+            do Screen.drawLine(x+10, y+25, x+7, y+20);
+
+            do Screen.drawLine(x+7, y+14, x+6, y+17);
+            do Screen.drawLine(x+7, y+21, x+6, y+18);
+            do Screen.drawLine(x+7, y+15, x+7, y+18);
+            do Screen.drawLine(x+7, y+20, x+7, y+17);
+
+            do Screen.drawLine(x+23, y+29, x+23, y+19);
+            do Screen.drawLine(x+22, y+29, x+22, y+19);
+            do Screen.drawLine(x+23, y+19, x+15, y+19);
+            do Screen.drawLine(x+23, y+18, x+15, y+18);
+            return;
+        }
+
+        if ((slovo = 72) | (slovo = 104)) { // H/h
+            do Screen.drawLine(x+6, y+6, x+6, y+29);
+            do Screen.drawLine(x+7, y+6, x+7, y+29);
+            do Screen.drawLine(x+23, y+6, x+23, y+29);
+            do Screen.drawLine(x+22, y+6, x+22, y+29);
+            do Screen.drawLine(x+6, y+18, x+23, y+18);
+            do Screen.drawLine(x+6, y+17, x+23, y+17);
+            return;
+        }
+
+        if ((slovo = 73) | (slovo = 105)) { // I/i
+            do Screen.drawLine(x+6, y+6, x+23, y+6);
+            do Screen.drawLine(x+6, y+7, x+23, y+7);
+            do Screen.drawLine(x+6, y+29, x+23, y+29);
+            do Screen.drawLine(x+6, y+28, x+23, y+28);
+            do Screen.drawLine(x+15, y+6, x+15, y+29);
+            do Screen.drawLine(x+14, y+6, x+14, y+29);
+            return;
+        }
+
+        if ((slovo = 74) | (slovo = 106)) { // J/j
+            do Screen.drawLine(x+23, y+6, x+23, y+20);
+            do Screen.drawLine(x+22, y+6, x+22, y+20);
+
+            do Screen.drawLine(x+22, y+20, x+17, y+28);
+            do Screen.drawLine(x+22, y+20, x+16, y+28);
+
+            do Screen.drawLine(x+7, y+20, x+12, y+28);
+            do Screen.drawLine(x+7, y+20, x+13, y+28);
+        
+            do Screen.drawLine(x+15, y+29, x+10, y+26);
+            do Screen.drawLine(x+15, y+28, x+10, y+25);
+            do Screen.drawLine(x+10, y+26, x+6, y+20);
+
+            do Screen.drawLine(x+10, y+26, x+7, y+21);
+            do Screen.drawLine(x+10, y+25, x+6, y+20);
+
+            do Screen.drawLine(x+14, y+29, x+19, y+26);
+            do Screen.drawLine(x+14, y+28, x+19, y+25);
+            do Screen.drawLine(x+19, y+26, x+23, y+20);
+
+            do Screen.drawLine(x+12, y+28, x+17, y+28);
+            return;
+        }
+
+        if ((slovo = 75) | (slovo = 107)) { // K/k
+            do Screen.drawLine(x+6, y+6, x+6, y+29);
+            do Screen.drawLine(x+7, y+6, x+7, y+29);
+
+            do Screen.drawLine(x+6, y+17, x+23, y+6);
+            do Screen.drawLine(x+7, y+16, x+22, y+6);
+            do Screen.drawLine(x+6, y+18, x+23, y+6);
+
+            do Screen.drawLine(x+6, y+18, x+23, y+29);
+            do Screen.drawLine(x+7, y+19, x+22, y+29); 
+            do Screen.drawLine(x+6, y+17, x+23, y+29);
+            return;  
+        }
+
+        if ((slovo = 76) | (slovo = 108)) { // L/l
+            do Screen.drawLine(x+6, y+6, x+6, y+29);
+            do Screen.drawLine(x+7, y+6, x+7, y+29);
+            do Screen.drawLine(x+6, y+29, x+21, y+29);
+            do Screen.drawLine(x+6, y+28, x+21, y+28);
+            return;
+        }
+
+        if ((slovo = 77) | (slovo = 109)) { // M/m
+            do Screen.drawLine(x+6, y+6, x+6, y+29);
+            do Screen.drawLine(x+7, y+6, x+7, y+29);
+            do Screen.drawLine(x+23, y+6, x+23, y+29);
+            do Screen.drawLine(x+22, y+6, x+22, y+29);
+
+            do Screen.drawLine(x+6, y+6, x+14, y+17);
+            do Screen.drawLine(x+23, y+6, x+15, y+17);
+            do Screen.drawLine(x+6, y+7, x+14, y+18);
+            do Screen.drawLine(x+23, y+7, x+15, y+18);
+            do Screen.drawLine(x+7, y+6, x+14, y+16);
+            do Screen.drawLine(x+22, y+6, x+15, y+16);
+            do Screen.drawLine(x+7, y+6, x+14, y+15);
+            do Screen.drawLine(x+22, y+6, x+15, y+15);
+            return;
+        }
+
+        if ((slovo = 78) | (slovo = 110)) { // N/n
+            do Screen.drawLine(x+6, y+6, x+6, y+29);
+            do Screen.drawLine(x+7, y+6, x+7, y+29);
+            do Screen.drawLine(x+23, y+6, x+23, y+29);
+            do Screen.drawLine(x+22, y+6, x+22, y+29);
+            do Screen.drawLine(x+6, y+6, x+23, y+29);
+            do Screen.drawLine(x+7, y+6, x+22, y+29);
+            do Screen.drawLine(x+7, y+6, x+23, y+28);
+            do Screen.drawLine(x+6, y+7, x+23, y+28);
+            do Screen.drawLine(x+6, y+7, x+22, y+29);
+            return;
+        }
+
+        if ((slovo = 79) | (slovo = 111)) { // O/o
+            do Screen.drawLine(x+15, y+6, x+10, y+9);
+            do Screen.drawLine(x+15, y+29, x+10, y+26);
+            do Screen.drawLine(x+15, y+7, x+10, y+10);
+            do Screen.drawLine(x+15, y+28, x+10, y+25);
+            do Screen.drawLine(x+12, y+7, x+17, y+7);
+            do Screen.drawLine(x+12, y+28, x+17, y+28);
+
+            do Screen.drawLine(x+10, y+9, x+7, y+14);
+            do Screen.drawLine(x+10, y+26, x+7, y+21);
+            do Screen.drawLine(x+10, y+10, x+7, y+15);
+            do Screen.drawLine(x+10, y+25, x+7, y+20);
+
+            do Screen.drawLine(x+7, y+14, x+6, y+17);
+            do Screen.drawLine(x+7, y+21, x+6, y+18);
+            do Screen.drawLine(x+7, y+15, x+7, y+18);
+            do Screen.drawLine(x+7, y+20, x+7, y+17);
+
+            do Screen.drawLine(x+14, y+6, x+19, y+9);
+            do Screen.drawLine(x+14, y+29, x+19, y+26);
+            do Screen.drawLine(x+14, y+7, x+19, y+10);
+            do Screen.drawLine(x+14, y+28, x+19, y+25);
+
+            do Screen.drawLine(x+19, y+9, x+22, y+14);
+            do Screen.drawLine(x+19, y+26, x+22, y+21);
+            do Screen.drawLine(x+19, y+10, x+22, y+15);
+            do Screen.drawLine(x+19, y+25, x+22, y+20);
+
+            do Screen.drawLine(x+22, y+14, x+23, y+17);
+            do Screen.drawLine(x+22, y+21, x+23, y+18);
+            do Screen.drawLine(x+22, y+15, x+22, y+18);
+            do Screen.drawLine(x+22, y+20, x+22, y+17);
+
+
+            do Screen.drawLine(x+7, y+20, x+12, y+28);
+            do Screen.drawLine(x+7, y+20, x+13, y+28);
+            do Screen.drawLine(x+22, y+20, x+17, y+28);
+            do Screen.drawLine(x+22, y+20, x+16, y+28);
+
+            do Screen.drawLine(x+7, y+15, x+12, y+7);
+            do Screen.drawLine(x+7, y+15, x+13, y+7);
+            do Screen.drawLine(x+22, y+15, x+17, y+7);
+            do Screen.drawLine(x+22, y+15, x+16, y+7);
+            return;
+        }
+
+        if ((slovo = 80) | (slovo = 112)) {  // P/p
+            do Screen.drawLine(x+6, y+6, x+6, y+29);
+            do Screen.drawLine(x+7, y+6, x+7, y+29);
+
+            do Screen.drawLine(x+6, y+6, x+10, y+6);
+            do Screen.drawLine(x+6, y+15, x+10, y+15);
+            do Screen.drawLine(x+7, y+7, x+11, y+7);
+            do Screen.drawLine(x+7, y+14, x+11, y+14);
+
+            do Screen.drawLine(x+10, y+6, x+15, y+7);
+            do Screen.drawLine(x+10, y+15, x+15, y+14);
+            do Screen.drawLine(x+11, y+7, x+16, y+8);
+            do Screen.drawLine(x+11, y+14, x+16, y+13);
+
+            do Screen.drawLine(x+15, y+7, x+18, y+8);
+            do Screen.drawLine(x+15, y+14, x+18, y+13);
+            do Screen.drawLine(x+16, y+8, x+19, y+9);
+            do Screen.drawLine(x+16, y+13, x+19, y+12);
+
+            do Screen.drawLine(x+18, y+8, x+19, y+9);
+            do Screen.drawLine(x+18, y+13, x+19, y+12);
+            do Screen.drawLine(x+19, y+9, x+20, y+10);
+            do Screen.drawLine(x+19, y+12, x+20, y+11);
+
+            do Screen.drawLine(x+19, y+9, x+20, y+10);
+            do Screen.drawLine(x+19, y+12, x+20, y+11);
+            do Screen.drawLine(x+19, y+10, x+20, y+11);
+            do Screen.drawLine(x+19, y+11, x+20, y+10);
+            return;
+        }
+
+        if ((slovo = 81) | (slovo = 113)) { // Q/q
+            do Screen.drawLine(x+15, y+6, x+10, y+9);
+            do Screen.drawLine(x+15, y+29, x+10, y+26);
+            do Screen.drawLine(x+15, y+7, x+10, y+10);
+            do Screen.drawLine(x+15, y+28, x+10, y+25);
+            do Screen.drawLine(x+12, y+7, x+17, y+7);
+            do Screen.drawLine(x+12, y+28, x+17, y+28);
+
+            do Screen.drawLine(x+10, y+9, x+7, y+14);
+            do Screen.drawLine(x+10, y+26, x+7, y+21);
+            do Screen.drawLine(x+10, y+10, x+7, y+15);
+            do Screen.drawLine(x+10, y+25, x+7, y+20);
+
+            do Screen.drawLine(x+7, y+14, x+6, y+17);
+            do Screen.drawLine(x+7, y+21, x+6, y+18);
+            do Screen.drawLine(x+7, y+15, x+7, y+18);
+            do Screen.drawLine(x+7, y+20, x+7, y+17);
+
+            do Screen.drawLine(x+14, y+6, x+19, y+9);
+            do Screen.drawLine(x+14, y+29, x+19, y+26);
+            do Screen.drawLine(x+14, y+7, x+19, y+10);
+            do Screen.drawLine(x+14, y+28, x+19, y+25);
+
+            do Screen.drawLine(x+19, y+9, x+22, y+14);
+            do Screen.drawLine(x+19, y+26, x+22, y+21);
+            do Screen.drawLine(x+19, y+10, x+22, y+15);
+            do Screen.drawLine(x+19, y+25, x+22, y+20);
+
+            do Screen.drawLine(x+22, y+14, x+23, y+17);
+            do Screen.drawLine(x+22, y+21, x+23, y+18);
+            do Screen.drawLine(x+22, y+15, x+22, y+18);
+            do Screen.drawLine(x+22, y+20, x+22, y+17);
+
+            do Screen.drawLine(x+7, y+20, x+12, y+28);
+            do Screen.drawLine(x+7, y+20, x+13, y+28);
+            do Screen.drawLine(x+22, y+20, x+17, y+28);
+            do Screen.drawLine(x+22, y+20, x+16, y+28);
+
+            do Screen.drawLine(x+7, y+15, x+12, y+7);
+            do Screen.drawLine(x+7, y+15, x+13, y+7);
+            do Screen.drawLine(x+22, y+15, x+17, y+7);
+            do Screen.drawLine(x+22, y+15, x+16, y+7);
+
+            do Screen.drawLine(x+16, y+22, x+23, y+29);
+            do Screen.drawLine(x+16, y+21, x+23, y+28);
+            return;
+        }
+
+        if ((slovo = 82) | (slovo = 114)) {  // R/r
+            do Screen.drawLine(x+6, y+6, x+6, y+29);
+            do Screen.drawLine(x+7, y+6, x+7, y+29);
+
+            do Screen.drawLine(x+6, y+6, x+10, y+6);
+            do Screen.drawLine(x+6, y+15, x+10, y+15);
+            do Screen.drawLine(x+7, y+7, x+11, y+7);
+            do Screen.drawLine(x+7, y+14, x+11, y+14);
+
+            do Screen.drawLine(x+10, y+6, x+15, y+7);
+            do Screen.drawLine(x+10, y+15, x+15, y+14);
+            do Screen.drawLine(x+11, y+7, x+16, y+8);
+            do Screen.drawLine(x+11, y+14, x+16, y+13);
+
+            do Screen.drawLine(x+15, y+7, x+18, y+8);
+            do Screen.drawLine(x+15, y+14, x+18, y+13);
+            do Screen.drawLine(x+16, y+8, x+19, y+9);
+            do Screen.drawLine(x+16, y+13, x+19, y+12);
+
+            do Screen.drawLine(x+18, y+8, x+19, y+9);
+            do Screen.drawLine(x+18, y+13, x+19, y+12);
+            do Screen.drawLine(x+19, y+9, x+20, y+10);
+            do Screen.drawLine(x+19, y+12, x+20, y+11);
+
+            do Screen.drawLine(x+19, y+9, x+20, y+10);
+            do Screen.drawLine(x+19, y+12, x+20, y+11);
+            do Screen.drawLine(x+19, y+10, x+20, y+11);
+            do Screen.drawLine(x+19, y+11, x+20, y+10);
+
+            do Screen.drawLine(x+6, y+15, x+20, y+29);
+            do Screen.drawLine(x+7, y+14, x+21, y+28);
+            do Screen.drawLine(x+7, y+14, x+20, y+28);
+            do Screen.drawLine(x+6, y+14, x+21, y+28);
+            return;    
+        }
+
+        if ((slovo = 83) | (slovo = 115)) { // S/s
+            do Screen.drawLine(x+21, y+6, x+23, y+8);
+            do Screen.drawLine(x+21, y+7, x+23, y+9);
+
+            do Screen.drawLine(x+8, y+6, x+21, y+6);
+            do Screen.drawLine(x+8, y+7, x+21, y+7);
+
+            do Screen.drawLine(x+8, y+6, x+6, y+12);
+            do Screen.drawLine(x+8, y+7, x+7, y+13);
+
+            do Screen.drawLine(x+6, y+12, x+8, y+18);
+            do Screen.drawLine(x+7, y+13, x+8, y+17);
+
+            do Screen.drawLine(x+8, y+18, x+21, y+18);
+            do Screen.drawLine(x+8, y+17, x+21, y+17);
+
+            do Screen.drawLine(x+21, y+18, x+23, y+24);
+            do Screen.drawLine(x+21, y+17, x+22, y+25);
+
+            do Screen.drawLine(x+23, y+24, x+21, y+29);
+            do Screen.drawLine(x+22, y+23, x+21, y+28);
+
+            do Screen.drawLine(x+21, y+29, x+8, y+29);
+            do Screen.drawLine(x+21, y+28, x+8, y+28);
+
+            do Screen.drawLine(x+8, y+28, x+6, y+26);
+            do Screen.drawLine(x+8, y+29, x+6, y+27);
+            return;
+        }
+
+        if ((slovo = 84) | (slovo = 116)) { // T/t
+            do Screen.drawLine(x+6, y+6, x+23, y+6);
+            do Screen.drawLine(x+6, y+7, x+23, y+7);
+            do Screen.drawLine(x+15, y+6, x+15, y+29);
+            do Screen.drawLine(x+14, y+6, x+14, y+29);
+            return;
+        }
+
+        if ((slovo = 85) | (slovo = 117)) { // U/u
+            do Screen.drawLine(x+6, y+6, x+6, y+20);
+            do Screen.drawLine(x+7, y+6, x+7, y+20);
+            do Screen.drawLine(x+23, y+6, x+23, y+20);
+            do Screen.drawLine(x+22, y+6, x+22, y+20);
+
+
+            do Screen.drawLine(x+15, y+29, x+10, y+26);
+            do Screen.drawLine(x+15, y+28, x+10, y+25);
+            do Screen.drawLine(x+10, y+26, x+6, y+20);
+
+            do Screen.drawLine(x+7, y+20, x+12, y+28);
+            do Screen.drawLine(x+7, y+20, x+13, y+28);
+
+            do Screen.drawLine(x+10, y+26, x+7, y+21);
+            do Screen.drawLine(x+10, y+25, x+6, y+20);
+
+
+            do Screen.drawLine(x+14, y+29, x+19, y+26);
+            do Screen.drawLine(x+14, y+28, x+19, y+25);
+            do Screen.drawLine(x+19, y+26, x+23, y+20);
+
+            do Screen.drawLine(x+22, y+20, x+17, y+28);
+            do Screen.drawLine(x+22, y+20, x+16, y+28);
+            
+            do Screen.drawLine(x+19, y+26, x+22, y+21);
+            do Screen.drawLine(x+19, y+25, x+23, y+20);
+
+            do Screen.drawLine(x+12, y+28, x+17, y+28);
+            return;
+        }
+
+        if ((slovo = 86) | (slovo = 118)) { // V/v
+            do Screen.drawLine(x+6, y+6, x+14, y+29);
+            do Screen.drawLine(x+7, y+6, x+15, y+29);
+            do Screen.drawLine(x+23, y+6, x+15, y+29);
+            do Screen.drawLine(x+22, y+6, x+14, y+29);
+            do Screen.drawPixel(x+14, y+24);
+            do Screen.drawPixel(x+15, y+24);
+            return;
+        }
+
+        if ((slovo = 87) | (slovo = 119)) { // W/w
+            do Screen.drawLine(x+6, y+6, x+6, y+29);
+            do Screen.drawLine(x+7, y+6, x+7, y+29);
+            do Screen.drawLine(x+23, y+6, x+23, y+29);
+            do Screen.drawLine(x+22, y+6, x+22, y+29);
+
+            do Screen.drawLine(x+6, y+29, x+14, y+17);
+            do Screen.drawLine(x+23, y+29, x+15, y+17);
+            do Screen.drawLine(x+6, y+28, x+14, y+18);
+            do Screen.drawLine(x+23, y+28, x+15, y+18);
+            do Screen.drawLine(x+7, y+29, x+14, y+16);
+            do Screen.drawLine(x+22, y+29, x+15, y+16);
+            do Screen.drawLine(x+7, y+29, x+14, y+15);
+            do Screen.drawLine(x+22, y+29, x+15, y+15);
+            return;
+        }
+
+        if ((slovo = 88) | (slovo = 120)) { // X/x
+            do Screen.drawLine(x+6, y+6, x+23, y+29);
+            do Screen.drawLine(x+7, y+6, x+22, y+29);
+            do Screen.drawLine(x+7, y+6, x+23, y+28);
+            do Screen.drawLine(x+6, y+7, x+23, y+28);
+            do Screen.drawLine(x+6, y+7, x+22, y+29);
+
+            do Screen.drawLine(x+23, y+6, x+6, y+29);
+            do Screen.drawLine(x+22, y+6, x+7, y+29);
+            do Screen.drawLine(x+22, y+6, x+6, y+28);
+            do Screen.drawLine(x+23, y+7, x+6, y+28);
+            do Screen.drawLine(x+23, y+7, x+7, y+29);
+            return;
+        }
+
+        if ((slovo = 89) | (slovo = 121)) { // Y/y
+            do Screen.drawLine(x+6, y+6, x+15, y+19);
+            do Screen.drawLine(x+7, y+6, x+14, y+19);
+            do Screen.drawLine(x+7, y+6, x+15, y+18);
+            do Screen.drawLine(x+6, y+7, x+15, y+18);
+            do Screen.drawLine(x+6, y+7, x+14, y+19);
+
+            do Screen.drawLine(x+23, y+6, x+14, y+19);
+            do Screen.drawLine(x+22, y+6, x+15, y+19);
+            do Screen.drawLine(x+22, y+6, x+14, y+18);
+            do Screen.drawLine(x+23, y+7, x+14, y+18);
+            do Screen.drawLine(x+23, y+7, x+15, y+19);
+
+            do Screen.drawLine(x+14, y+18, x+14, y+29);
+            do Screen.drawLine(x+15, y+18, x+15, y+29);
+            return;
+        }
+
+        if ((slovo = 90) | (slovo = 122)) { // Z/z
+            do Screen.drawLine(x+6, y+6, x+23, y+6);
+            do Screen.drawLine(x+6, y+7, x+23, y+7);
+            do Screen.drawLine(x+6, y+29, x+23, y+29);
+            do Screen.drawLine(x+6, y+28, x+23, y+28);
+
+            do Screen.drawLine(x+23, y+6, x+6, y+29);
+            do Screen.drawLine(x+22, y+6, x+7, y+29);
+            do Screen.drawLine(x+22, y+6, x+6, y+28);
+            do Screen.drawLine(x+23, y+7, x+6, y+28);
+            do Screen.drawLine(x+23, y+7, x+7, y+29);
+            return;
+        }
+
+        if (slovo = 51) {  // 3 
+            do Screen.drawLine(x+23, y+6, x+23, y+29);
+            do Screen.drawLine(x+22, y+6, x+22, y+29);
+            do Screen.drawLine(x+6, y+6, x+23, y+6);
+            do Screen.drawLine(x+6, y+7, x+23, y+7);
+            do Screen.drawLine(x+6, y+29, x+23, y+29);
+            do Screen.drawLine(x+6, y+28, x+23, y+28);
+            do Screen.drawLine(x+23, y+18, x+11, y+18);
+            do Screen.drawLine(x+23, y+17, x+11, y+17);
+            return;
+        }
+
+        if (slovo = 52) {  // 4 
+            do Screen.drawLine(x+6, y+6, x+6, y+17);
+            do Screen.drawLine(x+7, y+6, x+7, y+17);
+
+            do Screen.drawLine(x+6, y+17, x+23, y+17);
+            do Screen.drawLine(x+6, y+18, x+23, y+18);
+
+            do Screen.drawLine(x+16, y+29, x+16, y+10);
+            do Screen.drawLine(x+17, y+29, x+17, y+10);
+            return;
+        }
+
+        if (slovo = 53) {  // 5 
+            do Screen.drawLine(x+6, y+6, x+23, y+6);
+            do Screen.drawLine(x+6, y+7, x+23, y+7);
+            do Screen.drawLine(x+6, y+6, x+6, y+14);
+            do Screen.drawLine(x+7, y+6, x+7, y+14);
+            do Screen.drawLine(x+6, y+14, x+23, y+14);
+            do Screen.drawLine(x+6, y+15, x+23, y+15);
+            do Screen.drawLine(x+23, y+14, x+23, y+29);
+            do Screen.drawLine(x+22, y+14, x+22, y+29);
+            do Screen.drawLine(x+23, y+29, x+6, y+29);
+            do Screen.drawLine(x+23, y+28, x+6, y+28);
+            return;
+        }
+
+        if (slovo = 54) {  // 6
+            do Screen.drawLine(x+6, y+6, x+23, y+6);
+            do Screen.drawLine(x+6, y+7, x+23, y+7);
+            do Screen.drawLine(x+6, y+6, x+6, y+16);
+            do Screen.drawLine(x+7, y+6, x+7, y+16);
+            do Screen.drawLine(x+6, y+16, x+23, y+16);
+            do Screen.drawLine(x+6, y+17, x+23, y+17);
+            do Screen.drawLine(x+23, y+16, x+23, y+29);
+            do Screen.drawLine(x+22, y+16, x+22, y+29);
+            do Screen.drawLine(x+23, y+29, x+6, y+29);
+            do Screen.drawLine(x+23, y+28, x+6, y+28);
+            do Screen.drawLine(x+6, y+29, x+6, y+17);
+            do Screen.drawLine(x+7, y+29, x+7, y+17);
+            return;
+        }
+
+        if (slovo = 55) {  // 7
+            do Screen.drawLine(x+6, y+6, x+23, y+6);
+            do Screen.drawLine(x+6, y+7, x+23, y+7);
+
+            do Screen.drawLine(x+23, y+6, x+6, y+29);
+            do Screen.drawLine(x+22, y+6, x+7, y+29);
+            do Screen.drawLine(x+22, y+6, x+6, y+28);
+            do Screen.drawLine(x+23, y+7, x+6, y+28);
+            do Screen.drawLine(x+23, y+7, x+7, y+29);
+
+            do Screen.drawLine(x+10, y+16, x+21, y+16);
+            do Screen.drawLine(x+10, y+17, x+21, y+17);
+            return;
+        }
+
+        return;
+    }
+
+    method bool provjera(String pogadaj, int pokusaj) {
+        var int i, j, x, y, broj_tocnih;
+        var String temp_rijec;
+        let broj_tocnih = 0;
+
+        let i = 0;
+        let temp_rijec = String.new(duljina_rijeci);
+        while (i < duljina_rijeci) {
+            do temp_rijec.appendChar(rijec.charAt(i));
+            let i = i + 1;
+        }
+
+        let i = 0;
+        let x = pocetni_x;
+        let y = pokusaj * 44;
+        while (i < duljina_rijeci) {
+            if (temp_rijec.charAt(i) = pogadaj.charAt(i)) {
+                do crtaj(pogadaj.charAt(i), true, false, x, y, true);
+                do temp_rijec.setCharAt(i, 95);
+                do pogadaj.setCharAt(i, 95);
+                let broj_tocnih = broj_tocnih + 1;
+            }
+            let x = x + 34;
+            let i = i + 1;
+        }
+
+        let i = 0;
+        let x = pocetni_x;
+        while (i < duljina_rijeci) {
+            let j = 0;
+            if (~(pogadaj.charAt(i) = 95)) {
+                while (j < duljina_rijeci) {
+                    if (temp_rijec.charAt(j) = pogadaj.charAt(i)) {
+                        do crtaj(pogadaj.charAt(i), false, true, x, y, true);
+                        do temp_rijec.setCharAt(j, 95);
+                        do pogadaj.setCharAt(i, 95);
+                        let j = duljina_rijeci;
+                    }
+                    let j = j + 1;
+                }
+            }
+            let x = x + 34;
+            let i = i + 1;
+        }
+
+        do temp_rijec.dispose();
+
+        if (broj_tocnih = duljina_rijeci) { return true; }
+        else { return false; }
+    }
+
+    method void pocetni_screen() {
+        var int x, y;
+
+        let x = 183;
+        let y = 0;
+        do crtaj(119, false, false, x, y, false);
+        let x = x + 24;
+        do crtaj(111, false, false, x, y, false);
+        let x = x + 24;
+        do crtaj(114, false, false, x, y, false);
+        let x = x + 24;
+        do crtaj(100, false, false, x, y, false);
+        let x = x + 24;
+        do crtaj(108, false, false, x, y, false);
+        let x = x + 24;
+        do crtaj(101, false, false, x, y, false);
+
+        do Screen.drawRectangle(170, 40, x+38, 44);
+        
+        let x = 39;
+        let y = 60;
+        do crtaj(115, false, false, x, y, false);
+        let x = x + 24;
+        do crtaj(101, false, false, x, y, false);
+        let x = x + 24;
+        do crtaj(108, false, false, x, y, false);
+        let x = x + 24;
+        do crtaj(101, false, false, x, y, false);
+        let x = x + 24;
+        do crtaj(99, false, false, x, y, false);
+        let x = x + 24;
+        do crtaj(116, false, false, x, y, false);
+        let x = x + 24;
+
+        do crtaj(0, false, false, x, y, false);
+        let x = x + 24;
+
+        do crtaj(119, false, false, x, y, false);
+        let x = x + 24;
+        do crtaj(111, false, false, x, y, false);
+        let x = x + 24;
+        do crtaj(114, false, false, x, y, false);
+        let x = x + 24;
+        do crtaj(100, false, false, x, y, false);
+        let x = x + 24;
+
+        do crtaj(0, false, false, x, y, false);
+        let x = x + 24;
+
+        do crtaj(108, false, false, x, y, false);
+        let x = x + 24;
+        do crtaj(101, false, false, x, y, false);
+        let x = x + 24;
+        do crtaj(110, false, false, x, y, false);
+        let x = x + 24;
+        do crtaj(103, false, false, x, y, false);
+        let x = x + 24;
+        do crtaj(116, false, false, x, y, false);
+        let x = x + 24;
+        do crtaj(104, false, false, x, y, false);
+        let x = x + 24;
+
+        let x = 42;
+        let y = 140;
+        do crtaj(51, false, false, x, y, true);
+        let x = x + 200;
+        do crtaj(52, false, false, x, y, false);
+        let x = x + 200;
+        do crtaj(53, false, false, x, y, false);
+
+        return;
+    }
+
+    method void zavrsni_screen(bool pobjeda) {
+        var int x, y, i;
+        if (pobjeda = true) {
+            let x = 171;
+            let y = 111;
+
+            do Screen.setColor(true);
+            do Screen.drawRectangle(x-7, y-7, x+182, y+42);
+            do Screen.setColor(false);
+            do Screen.drawRectangle(x-5, y-5, x+180, y+40);
+            do Screen.setColor(true);
+
+            do crtaj(121, false, false, x, y, false);
+            let x = x + 24;
+            do crtaj(111, false, false, x, y, false);
+            let x = x + 24;
+            do crtaj(117, false, false, x, y, false);
+            let x = x + 24;
+            do crtaj(0, false, false, x, y, false);
+            let x = x + 24;
+            do crtaj(119, false, false, x, y, false);
+            let x = x + 24;
+            do crtaj(105, false, false, x, y, false);
+            let x = x + 24;
+            do crtaj(110, false, false, x, y, false);
+        }
+        else {
+            let x = 159;
+            let y = 111;
+
+            do Screen.setColor(true);
+            do Screen.drawRectangle(x-7, y-7, x+206, y+42);
+            do Screen.setColor(false);
+            do Screen.drawRectangle(x-5, y-5, x+204, y+40);
+            do Screen.setColor(true);
+
+            do crtaj(121, false, false, x, y, false);
+            let x = x + 24;
+            do crtaj(111, false, false, x, y, false);
+            let x = x + 24;
+            do crtaj(117, false, false, x, y, false);
+            let x = x + 24;
+            do crtaj(0, false, false, x, y, false);
+            let x = x + 24;
+            do crtaj(108, false, false, x, y, false);
+            let x = x + 24;
+            do crtaj(111, false, false, x, y, false);
+            let x = x + 24;
+            do crtaj(115, false, false, x, y, false);
+            let x = x + 24;
+            do crtaj(101, false, false, x, y, false);
+
+            do Sys.wait(200);
+            let i = 0;
+            while (i = 0) { let i = Keyboard.keyPressed(); }
+            do Screen.clearScreen();
+    
+            let x = 112;
+            let y = 83;
+            do crtaj(116, false, false, x, y, false);
+            let x = x + 24;
+            do crtaj(104, false, false, x, y, false);
+            let x = x + 24;
+            do crtaj(101, false, false, x, y, false);
+            let x = x + 24;
+    
+            do crtaj(0, false, false, x, y, false);
+            let x = x + 24;
+    
+            do crtaj(119, false, false, x, y, false);
+            let x = x + 24;
+            do crtaj(111, false, false, x, y, false);
+            let x = x + 24;
+            do crtaj(114, false, false, x, y, false);
+            let x = x + 24;
+            do crtaj(100, false, false, x, y, false);
+            let x = x + 24;
+    
+            do crtaj(0, false, false, x, y, false);
+            let x = x + 24;
+    
+            do crtaj(119, false, false, x, y, false);
+            let x = x + 24;
+            do crtaj(97, false, false, x, y, false);
+            let x = x + 24;
+            do crtaj(115, false, false, x, y, false);
+    
+            let x = Math.divide(516 - Math.multiply(duljina_rijeci,24), 2) - 3 - 24;
+            let y = y + 46;
+            let i = 0;
+            while (i < duljina_rijeci) {
+                let x = x + 24;
+                do crtaj(rijec.charAt(i), false, false, x, y, false);
+                let i = i + 1;
+            }
+        }
+
+        do Sys.wait(600);
+        return;
+    }
+
+    method void dispose() {
+        do Memory.deAlloc(this);
+        return;
+    }
+}
